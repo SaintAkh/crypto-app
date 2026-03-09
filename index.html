@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CryptoX</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #060810;
+    --surface: #0d1117;
+    --card: #111827;
+    --border: #1f2937;
+    --accent: #00ff88;
+    --accent2: #0088ff;
+    --accent3: #ff6600;
+    --red: #ff4444;
+    --text: #f0f0f0;
+    --muted: #6b7280;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
+
+  /* Header */
+  .header {
+    padding: 20px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,255,136,0.4);
+  }
+  .logo span { color: var(--text); }
+  .header-badge {
+    background: rgba(0,255,136,0.1);
+    border: 1px solid rgba(0,255,136,0.2);
+    color: var(--accent);
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    padding: 0 16px;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tab {
+    flex: 1;
+    padding: 8px 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .tab.active {
+    background: rgba(0,255,136,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Pages */
+  .page { display: none; padding: 0 16px; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Portfolio card */
+  .portfolio-card {
+    background: linear-gradient(135deg, #0d1117 0%, #111827 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .portfolio-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0,255,136,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .portfolio-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-family: 'Space Mono', monospace; }
+  .portfolio-value { font-size: 36px; font-weight: 800; letter-spacing: -2px; margin-bottom: 4px; }
+  .portfolio-change { font-size: 13px; color: var(--accent); font-family: 'Space Mono', monospace; }
+  .portfolio-change.down { color: var(--red); }
+  .portfolio-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:active { transform: scale(0.96); background: #00dd77; }
+  .btn-secondary { background: rgba(0,136,255,0.15); color: var(--accent2); border: 1px solid rgba(0,136,255,0.3); }
+  .btn-secondary:active { transform: scale(0.96); }
+  .btn-danger { background: rgba(255,68,68,0.15); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+
+  /* Section title */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Coin list */
+  .coin-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .coin-card:active { transform: scale(0.98); border-color: var(--accent); }
+  .coin-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(0,255,136,0.03), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .coin-card:hover::after { opacity: 1; }
+  .coin-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .coin-info { flex: 1; }
+  .coin-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .coin-symbol { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .coin-price { text-align: right; }
+  .coin-usd { font-size: 15px; font-weight: 700; font-family: 'Space Mono', monospace; margin-bottom: 2px; }
+  .coin-pct { font-size: 12px; font-family: 'Space Mono', monospace; padding: 2px 7px; border-radius: 6px; }
+  .up { color: var(--accent); background: rgba(0,255,136,0.1); }
+  .dn { color: var(--red); background: rgba(255,68,68,0.1); }
+
+  /* Mini chart bars */
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 28px;
+    margin: 0 8px;
+  }
+  .bar {
+    width: 4px;
+    border-radius: 2px;
+    background: var(--accent);
+    opacity: 0.5;
+    transition: height 0.5s ease;
+  }
+  .bar.red { background: var(--red); }
+
+  /* Trade page */
+  .trade-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .trade-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .trade-pair { font-size: 20px; font-weight: 800; }
+  .trade-price { font-size: 13px; color: var(--accent); font-family: 'Space Mono', monospace; }
+
+  .input-group { margin-bottom: 14px; }
+  .input-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+  .input-row {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .input-row:focus-within { border-color: var(--accent); }
+  .input-row input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+  .input-suffix {
+    padding: 12px 14px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.03);
+    border-left: 1px solid var(--border);
+  }
+
+  .pct-buttons { display: flex; gap: 6px; margin-bottom: 14px; }
+  .pct-btn {
+    flex: 1;
+    padding: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .pct-btn:active, .pct-btn.selected { background: rgba(0,255,136,0.1); border-color: var(--accent); color: var(--accent); }
+
+  .trade-btns { display: flex; gap: 10px; }
+  .btn-buy { flex: 1; padding: 14px; background: var(--accent); color: #000; border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+  .btn-buy:active { transform: scale(0.97); }
+  .btn-sell { flex: 1; padding: 14px; background: rgba(255,68,68,0.15); color: var(--red); border: 1px solid rgba(255,68,68,0.3); border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+  .btn-sell:active { transform: scale(0.97); }
+
+  /* Orders */
+  .order-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .order-side { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 4px; display: inline-block; }
+  .order-side.buy { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .order-side.sell { background: rgba(255,68,68,0.15); color: var(--red); }
+  .order-pair { font-size: 14px; font-weight: 700; }
+  .order-amount { font-size: 13px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .order-status { text-align: right; }
+  .order-pnl { font-size: 14px; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .order-time { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* News */
+  .news-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .news-card:active { border-color: var(--accent2); transform: scale(0.99); }
+  .news-tag { font-size: 10px; font-weight: 700; color: var(--accent2); background: rgba(0,136,255,0.1); padding: 3px 8px; border-radius: 20px; display: inline-block; margin-bottom: 8px; font-family: 'Space Mono', monospace; }
+  .news-title { font-size: 14px; font-weight: 700; line-height: 1.4; margin-bottom: 8px; }
+  .news-meta { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* Stats row */
+  .stats-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .stat-card {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .stat-value { font-size: 16px; font-weight: 800; margin-bottom: 2px; font-family: 'Space Mono', monospace; }
+  .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: rgba(6,8,16,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 20px;
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: all 0.2s;
+  }
+  .nav-icon { font-size: 22px; transition: transform 0.2s; }
+  .nav-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; transition: color 0.2s; }
+  .nav-item.active .nav-label { color: var(--accent); }
+  .nav-item.active .nav-icon { transform: scale(1.15); }
+  .nav-dot {
+    width: 4px; height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .nav-item.active .nav-dot { opacity: 1; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--accent);
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 14px;
+    z-index: 200;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 0; }
+
+  /* Shimmer loading */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .shimmer {
+    background: linear-gradient(90deg, var(--card) 25%, var(--border) 50%, var(--card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">Crypto<span>X</span></div>
+    <div class="header-badge">● LIVE</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchPage('home', this)">Портфель</div>
+    <div class="tab" onclick="switchPage('market', this)">Рынок</div>
+    <div class="tab" onclick="switchPage('trade', this)">Торговля</div>
+    <div class="tab" onclick="switchPage('news', this)">Новости</div>
+  </div>
+
+  <!-- HOME PAGE -->
+  <div class="page active" id="page-home">
+    <div class="portfolio-card">
+      <div class="portfolio-label">ОБЩИЙ БАЛАНС</div>
+      <div class="portfolio-value" id="total-balance">$12,847.33</div>
+      <div class="portfolio-change" id="balance-change">▲ +$284.50 (2.26%) сегодня</div>
+      <div class="portfolio-actions">
+        <button class="btn btn-primary" onclick="showToast('💰 Пополнение открыто')">Пополнить</button>
+        <button class="btn btn-secondary" onclick="showToast('📤 Вывод открыт')">Вывести</button>
+        <button class="btn btn-danger" onclick="switchPageByName('trade')">Торговать</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--accent)">+18.4%</div>
+        <div class="stat-label">За месяц</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">7</div>
+        <div class="stat-label">Активов</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--accent3)">$4.2K</div>
+        <div class="stat-label">Прибыль</div>
+      </div>
+    </div>
+
+    <div class="section-title">МОИ АКТИВЫ</div>
+    <div id="my-assets"></div>
+  </div>
+
+  <!-- MARKET PAGE -->
+  <div class="page" id="page-market">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" style="font-size:13px">$2.41T</div>
+        <div class="stat-label">Капитализация</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="font-size:13px; color:var(--accent)">+3.2%</div>
+        <div class="stat-label">24ч изменение</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="font-size:13px">$89B</div>
+        <div class="stat-label">Объём 24ч</div>
+      </div>
+    </div>
+    <div class="section-title">ТОП МОНЕТЫ</div>
+    <div id="market-list"></div>
+  </div>
+
+  <!-- TRADE PAGE -->
+  <div class="page" id="page-trade">
+    <div class="trade-card">
+      <div class="trade-header">
+        <div>
+          <div class="trade-pair">BTC / USDT</div>
+          <div class="trade-price" id="trade-live-price">$67,420.00 ▲</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace">24H HIGH</div>
+          <div style="font-size:13px;font-family:'Space Mono',monospace;color:var(--accent)">$68,100</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:4px">24H LOW</div>
+          <div style="font-size:13px;font-family:'Space Mono',monospace;color:var(--red)">$65,800</div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">КОЛИЧЕСТВО</div>
+        <div class="input-row">
+          <input type="number" id="trade-amount" placeholder="0.00" value="0.1">
+          <div class="input-suffix">BTC</div>
+        </div>
+      </div>
+
+      <div class="pct-buttons">
+        <div class="pct-btn" onclick="setPct(this,'25%')">25%</div>
+        <div class="pct-btn" onclick="setPct(this,'50%')">50%</div>
+        <div class="pct-btn" onclick="setPct(this,'75%')">75%</div>
+        <div class="pct-btn" onclick="setPct(this,'100%')">MAX</div>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">ИТОГО (USDT)</div>
+        <div class="input-row">
+          <input type="number" id="trade-total" placeholder="0.00" value="6742.00">
+          <div class="input-suffix">USDT</div>
+        </div>
+      </div>
+
+      <div class="trade-btns">
+        <button class="btn-buy" onclick="placeTrade('BUY')">▲ КУПИТЬ</button>
+        <button class="btn-sell" onclick="placeTrade('SELL')">▼ ПРОДАТЬ</button>
+      </div>
+    </div>
+
+    <div class="section-title">ОТКРЫТЫЕ ПОЗИЦИИ</div>
+    <div id="open-orders"></div>
+  </div>
+
+  <!-- NEWS PAGE -->
+  <div class="page" id="page-news">
+    <div class="section-title">КРИПТО НОВОСТИ</div>
+    <div id="news-list"></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-home" onclick="switchPage('home', null, 'nav-home')">
+    <div class="nav-icon">💼</div>
+    <div class="nav-label">КОШЕЛЁК</div>
+    <div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-market" onclick="switchPage('market', null, 'nav-market')">
+    <div class="nav-icon">📊</div>
+    <div class="nav-label">РЫНОК</div>
+    <div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-trade" onclick="switchPage('trade', null, 'nav-trade')">
+    <div class="nav-icon">⚡</div>
+    <div class="nav-label">ТРЕЙД</div>
+    <div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-news" onclick="switchPage('news', null, 'nav-news')">
+    <div class="nav-icon">📰</div>
+    <div class="nav-label">НОВОСТИ</div>
+    <div class="nav-dot"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// Init Telegram WebApp
+if (window.Telegram && window.Telegram.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+  Telegram.WebApp.setHeaderColor('#060810');
+  Telegram.WebApp.setBackgroundColor('#060810');
+}
+
+// Data
+const coins = [
+  { name: 'Bitcoin', symbol: 'BTC', icon: '₿', price: 67420, change: 2.34, color: '#f7931a', bars: [60,55,70,65,80,75,90,85,95,88], myAmount: 0.18 },
+  { name: 'Ethereum', symbol: 'ETH', icon: 'Ξ', price: 3520, change: -1.12, color: '#627eea', bars: [80,75,85,70,65,75,68,72,70,65], myAmount: 1.4 },
+  { name: 'Solana', symbol: 'SOL', icon: '◎', price: 182, change: 5.67, color: '#9945ff', bars: [40,50,60,55,70,80,75,85,90,95], myAmount: 12 },
+  { name: 'BNB', symbol: 'BNB', icon: '⬡', price: 412, change: 0.88, color: '#f3ba2f', bars: [65,70,68,72,70,75,73,78,76,80], myAmount: 3 },
+  { name: 'XRP', symbol: 'XRP', icon: '✕', price: 0.62, change: -0.45, color: '#00aae4', bars: [55,60,50,58,52,55,50,48,52,50], myAmount: 0 },
+  { name: 'DOGE', symbol: 'DOGE', icon: 'Ð', price: 0.18, change: 8.92, color: '#c2a633', bars: [30,40,50,60,75,85,90,95,100,98], myAmount: 0 },
+];
+
+const news = [
+  { tag: 'BITCOIN', title: 'Bitcoin пробил уровень $67,000 — аналитики прогнозируют новые максимумы в Q2', time: '2 мин назад' },
+  { tag: 'ETHEREUM', title: 'Ethereum L2 объёмы достигли рекорда: $12 млрд транзакций за неделю', time: '15 мин назад' },
+  { tag: 'РЕГУЛЯЦИИ', title: 'SEC одобрила новые правила для криптовалютных ETF — рынок реагирует ростом', time: '1 час назад' },
+  { tag: 'SOLANA', title: 'Solana обошла Ethereum по количеству активных кошельков второй месяц подряд', time: '2 часа назад' },
+  { tag: 'DEFI', title: 'TVL в DeFi протоколах вырос до $95 млрд — максимум за последние 18 месяцев', time: '3 часа назад' },
+  { tag: 'NFT', title: 'Объём NFT торгов на OpenSea вырос на 340% после объявления нового маркетплейса', time: '5 часов назад' },
+];
+
+const orders = [
+  { side: 'buy', pair: 'BTC/USDT', amount: '0.18 BTC', price: '$64,200', pnl: '+$582.36', pct: '+9.1%', time: '12:34' },
+  { side: 'buy', pair: 'SOL/USDT', amount: '12 SOL', price: '$165.00', pnl: '+$204.00', pct: '+10.3%', time: '11:20' },
+  { side: 'sell', pair: 'ETH/USDT', amount: '0.5 ETH', price: '$3,600', pnl: '-$40.00', pct: '-2.2%', time: '09:15' },
+];
+
+// Render market list
+function renderMarket() {
+  const el = document.getElementById('market-list');
+  el.innerHTML = coins.map(c => `
+    <div class="coin-card" onclick="openCoin('${c.symbol}')">
+      <div class="coin-icon" style="background:${c.color}22;color:${c.color};font-weight:800;font-size:18px">${c.icon}</div>
+      <div class="coin-info">
+        <div class="coin-name">${c.name}</div>
+        <div class="coin-symbol">${c.symbol}</div>
+      </div>
+      <div class="mini-chart">
+        ${c.bars.map(b => `<div class="bar ${c.change < 0 ? 'red' : ''}" style="height:${b*0.28}px"></div>`).join('')}
+      </div>
+      <div class="coin-price">
+        <div class="coin-usd">${formatPrice(c.price)}</div>
+        <div class="coin-pct ${c.change >= 0 ? 'up' : 'dn'}">${c.change >= 0 ? '+' : ''}${c.change}%</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render my assets
+function renderAssets() {
+  const el = document.getElementById('my-assets');
+  const myCoins = coins.filter(c => c.myAmount > 0);
+  el.innerHTML = myCoins.map(c => `
+    <div class="coin-card" onclick="openCoin('${c.symbol}')">
+      <div class="coin-icon" style="background:${c.color}22;color:${c.color};font-weight:800;font-size:18px">${c.icon}</div>
+      <div class="coin-info">
+        <div class="coin-name">${c.name}</div>
+        <div class="coin-symbol">${c.myAmount} ${c.symbol}</div>
+      </div>
+      <div class="coin-price">
+        <div class="coin-usd">${formatPrice(c.price * c.myAmount)}</div>
+        <div class="coin-pct ${c.change >= 0 ? 'up' : 'dn'}">${c.change >= 0 ? '+' : ''}${c.change}%</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render orders
+function renderOrders() {
+  const el = document.getElementById('open-orders');
+  el.innerHTML = orders.map(o => `
+    <div class="order-item">
+      <div>
+        <div class="order-side ${o.side}">${o.side === 'buy' ? '▲ КУПЛЯ' : '▼ ПРОДАЖА'}</div>
+        <div class="order-pair">${o.pair}</div>
+        <div class="order-amount">${o.amount} @ ${o.price}</div>
+      </div>
+      <div class="order-status">
+        <div class="order-pnl" style="color:${o.pnl.startsWith('+') ? 'var(--accent)' : 'var(--red)'}">${o.pnl}</div>
+        <div class="order-time" style="color:${o.pct.startsWith('+') ? 'var(--accent)' : 'var(--red)'}">${o.pct}</div>
+        <div class="order-time">${o.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render news
+function renderNews() {
+  const el = document.getElementById('news-list');
+  el.innerHTML = news.map(n => `
+    <div class="news-card" onclick="showToast('📰 Открываем статью...')">
+      <div class="news-tag">${n.tag}</div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-meta">${n.time}</div>
+    </div>
+  `).join('');
+}
+
+function formatPrice(p) {
+  if (p >= 1000) return '$' + p.toLocaleString('en', {maximumFractionDigits: 0});
+  if (p >= 1) return '$' + p.toFixed(2);
+  return '$' + p.toFixed(4);
+}
+
+// Navigation
+function switchPage(name, tabEl, navId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (tabEl) tabEl.classList.add('active');
+  const tabs = ['home','market','trade','news'];
+  const tabIndex = tabs.indexOf(name);
+  document.querySelectorAll('.tab')[tabIndex]?.classList.add('active');
+  const navEl = document.getElementById('nav-' + name) || (navId ? document.getElementById(navId) : null);
+  if (navEl) navEl.classList.add('active');
+}
+
+function switchPageByName(name) {
+  switchPage(name);
+  document.getElementById('nav-' + name)?.classList.add('active');
+}
+
+// Trade
+function setPct(el, pct) {
+  document.querySelectorAll('.pct-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function placeTrade(side) {
+  const amount = document.getElementById('trade-amount').value;
+  const emoji = side === 'BUY' ? '✅' : '🔴';
+  showToast(`${emoji} ${side}: ${amount} BTC по $67,420`);
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+  }
+}
+
+function openCoin(symbol) {
+  showToast(`📈 Открываем ${symbol}...`);
+}
+
+// Toast
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Live price animation
+let priceDir = 1;
+setInterval(() => {
+  const el = document.getElementById('trade-live-price');
+  if (!el) return;
+  const base = 67420;
+  const rand = (Math.random() - 0.5) * 200;
+  const price = (base + rand).toFixed(2);
+  priceDir = rand > 0 ? 1 : -1;
+  el.textContent = `$${Number(price).toLocaleString('en', {minimumFractionDigits: 2})} ${priceDir > 0 ? '▲' : '▼'}`;
+  el.style.color = priceDir > 0 ? 'var(--accent)' : 'var(--red)';
+}, 1500);
+
+// Init
+renderMarket();
+renderAssets();
+renderOrders();
+renderNews();
+</script>
+</body>
+</html>
